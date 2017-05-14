@@ -1,4 +1,4 @@
-#https://www.kaggle.com/cgrimal/quora-question-pairs/words-in-common-benchmark/code
+# The following code for this benchmark model is based on this kaggle kernel: https://www.kaggle.com/cgrimal/quora-question-pairs/words-in-common-benchmark/code
 
 from nltk.corpus import stopwords
 import pandas as pd
@@ -26,7 +26,7 @@ def word_match_share(row):
     #print shared_words_in_q1, " ", shared_words_in_q2
     #print len(shared_words_in_q1), " ", len(shared_words_in_q2)
     #return (0.5*len(shared_words_in_q1)/len(q1words) + 0.5*len(shared_words_in_q2)/len(q2words))
-    return (0.5*len(shared_words)/len(q1words) + 0.5*len(shared_words)/len(q2words))
+    #return (0.5*len(shared_words)/len(q1words) + 0.5*len(shared_words)/len(q2words))
     return (0.5*len(shared_words)* (1/len(q1words) + 1/len(q2words)))
 
 
