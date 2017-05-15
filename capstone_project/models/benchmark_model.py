@@ -47,6 +47,7 @@ test_pred = test.apply(word_match_share, axis=1, raw=True)
 
 #print test_pred
 
+
 #print test_pred, type(test_pred)
 print log_loss(test_y, test_pred)
 
