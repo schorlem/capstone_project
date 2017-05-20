@@ -1,27 +1,17 @@
 """Collections of functions that are used to preprocessing the Quora data"""
 import string
+import pandas as pd
 import spacy
+from scipy.sparse import hstack
 from nltk.corpus import stopwords
+from sklearn.feature_extraction.text import TfidfVectorizer
 from capstone_project.models import benchmark_model
 
-# A custom stoplist
+# List of stopwords that will be removed during tokenization
 STOPLIST = stopwords.words("english")
-# List of symbols we don't care about
+# List of punctuation symbols that will be removed during tokenization
 SYMBOLS = " ".join(string.punctuation).split(" ")
 
-
-def create_features(df):
-    # https://www.linkedin.com/pulse/duplicate-quora-question-abhishek-thakur
-    # and https://github.com/abhishekkrthakur/is_that_a_duplicate_quora_question
-
-    new_data["q1_len"] = df["question1"].apply(lambda question: len(str(question)))
-    new_data["q2_len"] = df["question2"].apply(lambda question: len(str(question)))
-    # tf-idf
-    new_data["word_share"] = df.apply(word_match_share, axis=1)
-    # shared words benchmark model
-    # ngrams vectorizer()
-    # word2vec features cosine distance jaccard distance, other distances?
-    return new_data
 
 def tokenize(question):
     """Tokenize english text. The function takes a string as input and return a list of tokens."""
@@ -33,13 +23,48 @@ def tokenize(question):
     for token in doc:
         tokens.append(token.lemma_.lower().strip() if token.lemma_ != "-PRON-" else token.lower_)
 
-    # stoplist the tokens
     tokens = [token for token in tokens if token not in STOPLIST]
 
-    # stoplist symbols
     tokens = [token for token in tokens if token not in SYMBOLS]
 
     return tokens
+
+
+class TfidfTransformer(object):
+    """Takes a dataframe, calculates the tfidf values for the column question 1 and question 2, 
+    outputs a sparse array of tfidf values for both questions.
+    """
+
+    def transform(self, df, **transform_params):
+        tfidf = TfidfVectorizer(strip_accents=None, lowercase=False, preprocessor=None,
+                                tokenizer=tokenize)
+
+        # Fit tfidfs on the whole corpus
+        tfidf.fit(pd.concat([df['question1'], df['question2']]))
+
+        tfidfs_q1 = tfidf.transform(df['question1'])
+        tfidfs_q2 = tfidf.transform(df['question2'])
+        # Stack horizontally since the words in q1 and q2 should be arranged in separate columns
+        tfidf_q1_q2 = hstack([tfidfs_q1, tfidfs_q2])
+
+        return tfidf_q1_q2
+
+    def fit(self, df, y=None, **fit_params):
+        return self
+
+
+def create_features(df):
+    # https://www.linkedin.com/pulse/duplicate-quora-question-abhishek-thakur
+    # and https://github.com/abhishekkrthakur/is_that_a_duplicate_quora_question
+    new_data = pd.DataFrame()
+    new_data["q1_len"] = df["question1"].apply(lambda question: len(str(question)))
+    new_data["q2_len"] = df["question2"].apply(lambda question: len(str(question)))
+    # tf-idf
+    new_data["word_share"] = df.apply(benchmark_model.word_match_share, axis=1)
+    # ngrams vectorizer()
+    # word2vec features cosine distance jaccard distance, other distances?
+    return new_data
+
 
 
 def vector():
