@@ -5,8 +5,11 @@ import spacy
 from scipy.sparse import hstack
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.base import BaseEstimator, TransformerMixin
 from capstone_project.models import benchmark_model
 
+# Create english spacy instance. Very slow to load and should thus only be done once
+nlp = spacy.load('en')
 # List of stopwords that will be removed during tokenization
 STOPLIST = stopwords.words("english")
 # List of punctuation symbols that will be removed during tokenization
@@ -15,8 +18,7 @@ SYMBOLS = " ".join(string.punctuation).split(" ")
 
 def tokenize(question):
     """Tokenize english text. The function takes a string as input and return a list of tokens."""
-    nlp = spacy.load('en')  # Create english instance
-    doc = nlp(unicode(question, 'utf-8'))  # spacy expects unicode strings as input
+    doc = nlp(question)  # spacy expects unicode strings as input
     tokens = []
 
     #  Next paragraph taken from tutorial:i https://nicschrading.com/project/Intro-to-NLP-with-spaCy/
@@ -30,26 +32,26 @@ def tokenize(question):
     return tokens
 
 
-class TfidfTransformer(object):
+class TfidfTransformer(BaseEstimator, TransformerMixin):
     """Takes a dataframe, calculates the tfidf values for the column question 1 and question 2, 
     outputs a sparse array of tfidf values for both questions.
     """
+    def __init__(self):
+        self.tfidf = TfidfVectorizer(strip_accents=None, lowercase=False,
+                                     preprocessor=None, tokenizer=tokenize)
 
     def transform(self, df, **transform_params):
-        tfidf = TfidfVectorizer(strip_accents=None, lowercase=False, preprocessor=None,
-                                tokenizer=tokenize)
-
-        # Fit tfidfs on the whole corpus
-        tfidf.fit(pd.concat([df['question1'], df['question2']]))
-
-        tfidfs_q1 = tfidf.transform(df['question1'])
-        tfidfs_q2 = tfidf.transform(df['question2'])
+        tfidfs_q1 = self.tfidf.transform(df['question1'])
+        tfidfs_q2 = self.tfidf.transform(df['question2'])
         # Stack horizontally since the words in q1 and q2 should be arranged in separate columns
         tfidf_q1_q2 = hstack([tfidfs_q1, tfidfs_q2])
 
         return tfidf_q1_q2
 
     def fit(self, df, y=None, **fit_params):
+        # Fit tfidfs on the whole corpus
+        self.tfidf.fit(pd.concat([df['question1'], df['question2']]))
+
         return self
 
 
