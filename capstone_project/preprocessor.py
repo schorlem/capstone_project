@@ -55,19 +55,21 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         return self
 
 
-def create_features(df):
-    # https://www.linkedin.com/pulse/duplicate-quora-question-abhishek-thakur
-    # and https://github.com/abhishekkrthakur/is_that_a_duplicate_quora_question
-    new_data = pd.DataFrame()
-    new_data["q1_len"] = df["question1"].apply(lambda question: len(str(question)))
-    new_data["q2_len"] = df["question2"].apply(lambda question: len(str(question)))
-    # tf-idf
-    new_data["word_share"] = df.apply(benchmark_model.word_match_share, axis=1)
-    # ngrams vectorizer()
-    # word2vec features cosine distance jaccard distance, other distances?
-    return new_data
+class FeatureTransformer(BaseEstimator, TransformerMixin):
 
+    def transform(self, df):
+        # https://www.linkedin.com/pulse/duplicate-quora-question-abhishek-thakur
+        # and https://github.com/abhishekkrthakur/is_that_a_duplicate_quora_question
+        new_data = pd.DataFrame()
+        new_data["q1_len"] = df["question1"].apply(lambda question: len(str(question)))
+        new_data["q2_len"] = df["question2"].apply(lambda question: len(str(question)))
+        new_data["word_share"] = df.apply(benchmark_model.word_match_share, axis=1)
+        return new_data
+
+    def fit(self, df, y=None, **fit_params):
+        return self
 
 
 def vector():
+    # TODO: word2vec features cosine distance jaccard distance, other distances?
     pass
