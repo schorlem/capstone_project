@@ -1,5 +1,3 @@
-# ignore folder that includes downloaded papers
-papers/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -98,5 +96,7 @@ ENV/
 
 # Cookiecutter folders
 /data/
-/figures/
+/reports/
 /output/
+# ignore folder that includes downloaded papers
+papers/

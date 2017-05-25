@@ -9,7 +9,7 @@ Project Organization
     │
     ├── data/               <- The original, immutable data dump. 
     │
-    ├── figures/            <- Figures saved by scripts or notebooks.
+    ├── reports/            <-  Report....
     │
     ├── notebooks/          <- Jupyter notebooks. Naming convention is a short `-` delimited 
     │                         description, a number (for ordering), and the creator's initials,
@@ -25,11 +25,9 @@ Project Organization
     │
     ├── LICENSE
     │
-    ├── Makefile            <- Makefile with commands like `make environment`
-    │
     ├── README.md           <- The top-level README for developers using this project.
     │
-    └── tox.ini             <- tox file with settings for running tox; see tox.testrun.org
+    └── setup.py             <- setup.py ....
 
 
 --------
