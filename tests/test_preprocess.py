@@ -25,7 +25,6 @@ def test_tfidftransformer():
     tfidf.fit(df)
     output = tfidf.transform(df)
     assert np.all(output.toarray() >= 0)
-    assert np.all(output.toarray() <= 1)
     assert output.dtype == float
     assert df.shape[0] == output.shape[0]
     assert output.shape[1] % 2 == 0
