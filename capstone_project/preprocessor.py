@@ -2,12 +2,16 @@
 import string
 import pandas as pd
 import spacy
+import gensim
 from scipy.sparse import hstack
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.base import BaseEstimator, TransformerMixin
 from capstone_project.models import benchmark_model
 
+
+# Loading is slow and is thus done only once
+model = gensim.models.KeyedVectors.load_word2vec_format('../data/GoogleNews-vectors-negative300.bin.gz', binary=True)
 # Create english spacy instance. Very slow to load and should thus only be done once
 nlp = spacy.load('en')
 # List of stopwords that will be removed during tokenization
@@ -31,6 +35,37 @@ def tokenize(question):
 
     return tokens
 
+
+def question_to_vector(question, model):
+    """Takes a list words as input and returns the word2vec matrix for these words.
+    The word2vec model was pretrained by google."""
+    M = []
+    for w in words:
+        M.append(model[w])
+        #try:
+        #    M.append(model[w])
+        #except:
+        #    continue
+    M = np.array(M)
+    print M
+    v = M.sum(axis=0)
+    print v
+    return v / np.sqrt((v ** 2).sum())
+
+
+def summarize_vectors(question):
+    M = []
+    for w in words:
+        M.append(model[w])
+        # try:
+        #    M.append(model[w])
+        # except:
+        #    continue
+    M = np.array(M)
+    print M
+    v = M.sum(axis=0)
+    print v
+    return v / np.sqrt((v ** 2).sum())
 
 class TfidfTransformer(BaseEstimator, TransformerMixin):
     """Takes a dataframe, calculates the tfidf values for the column question 1 and question 2, 
@@ -68,8 +103,3 @@ class FeatureTransformer(BaseEstimator, TransformerMixin):
 
     def fit(self, df, y=None, **fit_params):
         return self
-
-
-def vector():
-    # TODO: word2vec features cosine distance jaccard distance, other distances?
-    pass
