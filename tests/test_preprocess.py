@@ -2,18 +2,30 @@ import pandas as pd
 import capstone_project.preprocessor as pre
 import numpy as np
 
-
 def test_tokenize():
-    test_strings = [(u"This is a test.",
-                     [u"test"]),
-                    (u"Are there any positive benefits of laziness and procrastination?",
-                     [u"positive", u"benefit", u"laziness", u"procrastination"]),
-                    (u"A question for testing/trying.",
-                     [u"question", u"testing/try"])]
+    test_strings = [("This is a test.",
+                     np.array([u"test"])),
+                    ("Are there any positive benefits of laziness and procrastination?",
+                     np.array([u"positive", u"benefit", u"laziness", u"procrastination"])),
+                    ("A question for testing/trying.",
+                     np.array([u"question", u"testing/try"]))]
 
     for test_string, result in test_strings:
         output = pre.tokenize(test_string)
-        assert output == result
+        assert np.equal(output, result)
+
+
+def test_tokenize_unicode():
+    test_strings = [(u"This is a test.",
+                     np.array([u"test"])),
+                    (u"Are there any positive benefits of laziness and procrastination?",
+                     np.array([u"positive", u"benefit", u"laziness", u"procrastination"])),
+                    (u"A question for testing/trying.",
+                     np.array([u"question", u"testing/try"]))]
+
+    for test_string, result in test_strings:
+        output = pre.tokenize(test_string)
+        assert np.equal(output, result)
 
 
 def test_tfidftransformer():

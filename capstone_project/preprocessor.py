@@ -1,8 +1,8 @@
 """Collections of functions that are used to preprocessing the Quora data"""
 import string
 import pandas as pd
+import numpy as np
 import spacy
-import gensim
 from scipy.sparse import hstack
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -10,8 +10,6 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from capstone_project.models import benchmark_model
 
 
-# Loading is slow and is thus done only once
-model = gensim.models.KeyedVectors.load_word2vec_format('../data/GoogleNews-vectors-negative300.bin.gz', binary=True)
 # Create english spacy instance. Very slow to load and should thus only be done once
 nlp = spacy.load('en')
 # List of stopwords that will be removed during tokenization
@@ -22,50 +20,43 @@ SYMBOLS = " ".join(string.punctuation).split(" ")
 
 def tokenize(question):
     """Tokenize english text. The function takes a string as input and return a list of tokens."""
-    doc = nlp(question)  # spacy expects unicode strings as input
+    try:
+        unicode_string = unicode(question, "utf8")
+    except TypeError:
+        unicode_string = question  # Don't convert to utf8 if input is already utf8.
+
+    doc = nlp(unicode_string)  # spacy expects unicode strings as input
     tokens = []
 
-    #  Next paragraph taken from tutorial:i https://nicschrading.com/project/Intro-to-NLP-with-spaCy/
+    # Next paragraph taken from tutorial:i https://nicschrading.com/project/Intro-to-NLP-with-spaCy/
     for token in doc:
         tokens.append(token.lemma_.lower().strip() if token.lemma_ != "-PRON-" else token.lower_)
 
     tokens = [token for token in tokens if token not in STOPLIST]
-
     tokens = [token for token in tokens if token not in SYMBOLS]
+    tokens = np.array(tokens)
 
     return tokens
 
 
-def question_to_vector(question, model):
+def question_to_vector(question, model=None):
     """Takes a list words as input and returns the word2vec matrix for these words.
     The word2vec model was pretrained by google."""
-    M = []
-    for w in words:
-        M.append(model[w])
-        #try:
-        #    M.append(model[w])
-        #except:
-        #    continue
-    M = np.array(M)
-    print M
-    v = M.sum(axis=0)
-    print v
-    return v / np.sqrt((v ** 2).sum())
+    vectors = []
+    for w in question:
+        try:
+            vectors.append(model[w])
+        except KeyError:
+            continue  # Ignore words that are not in the vocabulary
+
+    vectors = np.array(vectors)
+    return vectors
 
 
-def summarize_vectors(question):
-    M = []
-    for w in words:
-        M.append(model[w])
-        # try:
-        #    M.append(model[w])
-        # except:
-        #    continue
-    M = np.array(M)
-    print M
-    v = M.sum(axis=0)
-    print v
-    return v / np.sqrt((v ** 2).sum())
+def sum_vectors(vectors):
+    vector = vectors.sum(axis=0)
+    return vector / np.sqrt((vector ** 2).sum())
+
 
 class TfidfTransformer(BaseEstimator, TransformerMixin):
     """Takes a dataframe, calculates the tfidf values for the column question 1 and question 2, 
