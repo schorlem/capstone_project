@@ -18,6 +18,9 @@ STOPLIST = stopwords.words("english")
 SYMBOLS = " ".join(string.punctuation).split(" ")
 
 
+# TODO add feature scaling and add new features
+
+
 def tokenize(question):
     """Tokenize english text. The function takes a string as input and return a list of tokens."""
     try:
