@@ -90,10 +90,16 @@ class FeatureTransformer(BaseEstimator, TransformerMixin):
         # https://www.linkedin.com/pulse/duplicate-quora-question-abhishek-thakur
         # and https://github.com/abhishekkrthakur/is_that_a_duplicate_quora_question
         new_data = pd.DataFrame()
-        new_data["q1_len"] = df["question1"].apply(lambda question: len(str(question)))
-        new_data["q2_len"] = df["question2"].apply(lambda question: len(str(question)))
+        new_data["q1_length"] = df["question1"].apply(lambda question: len(str(question)))
+        new_data["q2_length"] = df["question2"].apply(lambda question: len(str(question)))
+        new_data['diff_length'] = new_data["q1_length"] - new_data["q2_length"]
+        new_data["q1_n_words"] = df["q1_tokens"].apply(lambda words: len(words))
+        new_data["q2_n_words"] = df["q2_tokens"].apply(lambda words: len(words))
+        new_data["q1_len_word_ratio"] = new_data["q1_length"]/new_data["q1_n_words"]
+        new_data["q2_len_word_ratio"] = new_data["q2_length"]/new_data["q2_n_words"]
         new_data["word_share"] = df.apply(benchmark_model.word_match_share, axis=1)
         return new_data
 
     def fit(self, df, y=None, **fit_params):
         return self
+
