@@ -1,4 +1,6 @@
 """Collections of functions that are used to preprocessing the Quora data"""
+import os
+import pickle
 import string
 import pandas as pd
 import numpy as np
@@ -19,9 +21,11 @@ STOPLIST = stopwords.words("english")
 # List of punctuation symbols that will be removed during tokenization
 SYMBOLS = " ".join(string.punctuation).split(" ")
 
-
-# TODO add feature scaling and add new features
-
+def save_as_pickle(dataset, output_dir, filename):
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    with open (output_dir+filename, "wb") as handle:
+        pickle.dump(dataset, handle)
 
 def tokenize(question):
     """Tokenize english text. The function takes a string as input and return a list of tokens."""
@@ -53,6 +57,9 @@ def question_to_vector(question, model=None):
             vectors.append(model[w])
         except KeyError:
             continue  # Ignore words that are not in the vocabulary
+
+    if len(vectors) == 0:
+        return np.zeros(1,300)
 
     vectors = np.array(vectors)
     return vectors
