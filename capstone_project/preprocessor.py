@@ -56,19 +56,16 @@ def tokenize(question):
     return tokens
 
 
-
-
-
 class Word2vecTransformer(BaseEstimator, TransformerMixin):
     """Takes a tokenized list of words and transforms it into word2vec vectors. 
     If the option sum is set to True the transformer returns a normalised sum of these vectors."""
-    def __init__(self, model_file, sum=False):
+    def __init__(self, model_file=None, sum_up=False):
+        self._sum = sum_up
         self._model = gensim.models.KeyedVectors.load_word2vec_format(model_file, binary=True)
-
 
     def transform(self, df):
         new_df = pd.DataFrame()
-        if self.sum:
+        if self._sum:
             new_df["q1_vecsum"] = df["q1_tokens"].apply(self._question_to_vector).apply(self._sum_vectors)
             new_df["q2_vecsum"] = df["q2_tokens"].apply(self._question_to_vector).apply(self._sum_vectors)
         else:
@@ -77,10 +74,8 @@ class Word2vecTransformer(BaseEstimator, TransformerMixin):
 
         return new_df
 
-
     def fit(self, df, y=None, **fit_params):
         return self
-
 
     def _question_to_vector(self, question):
         """Takes a list words as input and returns the word2vec matrix for these words.
@@ -93,17 +88,14 @@ class Word2vecTransformer(BaseEstimator, TransformerMixin):
                 continue  # Ignore words that are not in the vocabulary
 
         if len(vectors) == 0:
-            return np.zeros(1,300)
+            return np.zeros((1, 300))
 
         vectors = np.array(vectors)
         return vectors
 
-
-        def _sum_vectors(self, vectors):
-            vector = vectors.sum(axis=0)
-            return vector / np.sqrt((vector ** 2).sum())
-
-
+    def _sum_vectors(self, vectors):
+        vector = vectors.sum(axis=0)
+        return vector / np.sqrt((vector ** 2).sum())
 
 
 class TfidfTransformer(BaseEstimator, TransformerMixin):
@@ -112,8 +104,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     """
     def __init__(self):
         self._tfidf = TfidfVectorizer(strip_accents=None, lowercase=False,
-                                     preprocessor=None, tokenizer=tokenize)
-
+                                      preprocessor=None, tokenizer=tokenize)
 
     def transform(self, df):
         tfidfs_q1 = self._tfidf.transform(df["question1"])
@@ -122,7 +113,6 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         tfidf_q1_q2 = hstack([tfidfs_q1, tfidfs_q2])
 
         return tfidf_q1_q2
-
 
     def fit(self, df, y=None, **fit_params):
         # Fit tfidfs on the whole corpus
@@ -152,6 +142,7 @@ class FeatureTransformer(BaseEstimator, TransformerMixin):
     def fit(self, df, y=None, **fit_params):
         return self
 
+
 class VectorFeatureTransformer(BaseEstimator, TransformerMixin):
 
     def transform(self, df):
@@ -159,18 +150,23 @@ class VectorFeatureTransformer(BaseEstimator, TransformerMixin):
          the following article https://www.linkedin.com/pulse/duplicate-quora-question-abhishek-thakur.
         """
         new_data = pd.DataFrame()
-        new_data["word2vec_cosine_distance"] = df.apply(lambda x: cosine(x["q1_vecsum"], x["q2_vecsum"]), axis=1)
-        new_data["word2vec_cityblock_distance"] = df.apply(lambda x: cityblock(x["q1_vecsum"],
-                                                                               x["q2_vecsum"]), axis=1)
-        new_data["word2vec_jaccard_distance"] = df.apply(lambda x: jaccard(x["q1_vecsum"], x["q2_vecsum"]), axis=1)
-        new_data["word2vec_canberra_distance"] = df.apply(lambda x: canberra(x["q1_vecsum"], x["q2_vecsum"]), axis=1)
-        new_data["word2vec_minkowski_distance"] = df.apply(lambda x: minkowski(x["q1_vecsum"], x["q2_vecsum"], 3), axis=1)
-        new_data["word2vec_euclidean_distance"] = df.apply(lambda x: euclidean(x["q1_vecsum"], x["q2_vecsum"]), axis=1)
-        new_data["word2vec_braycurtis_distance"] = df.apply(lambda x: braycurtis(x["q1_vecsum"], x["q2_vecsum"]), axis=1)
-        new_data["word2vec_skew_q1"] = df["q1_vecsum"].apply(lambda vector: skew(vector))
-        new_data["word2vec_skew_q2"] = df["q2_vecsum"].apply(lambda vector: skew(vector))
-        new_data["word2vec_kurtosis_q1"] = df["q1_vecsum"].apply(lambda vector: kurtosis(vector))
-        new_data["word2vec_kurtosis_q2"] = df["q2_vecsum"].apply(lambda vector: kurtosis(vector))
+        new_data["word2vec_cosine_distance"] = df.apply(lambda x: cosine(np.nan_to_num(x["q1_vecsum"]), np.nan_to_num(x["q2_vecsum"])), axis=1)
+        new_data["word2vec_cityblock_distance"] = df.apply(lambda x: cityblock(np.nan_to_num(x["q1_vecsum"]),
+                                                                               np.nan_to_num(x["q2_vecsum"])), axis=1)
+        new_data["word2vec_jaccard_distance"] = df.apply(lambda x: jaccard(np.nan_to_num(x["q1_vecsum"]), np.nan_to_num(x["q2_vecsum"])), axis=1)
+        new_data["word2vec_canberra_distance"] = df.apply(lambda x: canberra(np.nan_to_num(x["q1_vecsum"]), np.nan_to_num(x["q2_vecsum"])), axis=1)
+        new_data["word2vec_minkowski_distance"] = df.apply(lambda x:
+                                                           minkowski(np.nan_to_num(x["q1_vecsum"]), np.nan_to_num(x["q2_vecsum"]), 3), axis=1)
+        new_data["word2vec_euclidean_distance"] = df.apply(lambda x:
+                                                           euclidean(np.nan_to_num(x["q1_vecsum"]), np.nan_to_num(x["q2_vecsum"])), axis=1)
+        new_data["word2vec_braycurtis_distance"] = df.apply(lambda x:
+                                                            braycurtis(np.nan_to_num(x["q1_vecsum"]), np.nan_to_num(x["q2_vecsum"])), axis=1)
+        new_data["word2vec_skew_q1"] = df["q1_vecsum"].apply(lambda vector: skew(np.nan_to_num(vector)))
+        new_data["word2vec_skew_q2"] = df["q2_vecsum"].apply(lambda vector: skew(np.nan_to_num(vector)))
+        new_data["word2vec_kurtosis_q1"] = df["q1_vecsum"].apply(lambda vector: kurtosis(np.nan_to_num(vector)))
+        new_data["word2vec_kurtosis_q2"] = df["q2_vecsum"].apply(lambda vector: kurtosis(np.nan_to_num(vector)))
+
+        new_data = new_data.fillna(df.mean()) # Fill nan values of distance measures. Caused by questions with stopwords only
 
         return new_data
 
