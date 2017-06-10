@@ -5,6 +5,7 @@ import string
 import pandas as pd
 import numpy as np
 import spacy
+import gensim
 from scipy.sparse import hstack
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -21,11 +22,18 @@ STOPLIST = stopwords.words("english")
 # List of punctuation symbols that will be removed during tokenization
 SYMBOLS = " ".join(string.punctuation).split(" ")
 
+
 def save_as_pickle(dataset, output_dir, filename):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    with open (output_dir+filename, "wb") as handle:
+    with open(output_dir+filename, "wb") as handle:
         pickle.dump(dataset, handle)
+
+
+def load_pickle(input_dir, filename):
+    with open(input_dir+filename, "rb") as handle:
+        return pickle.load(handle)
+
 
 def tokenize(question):
     """Tokenize english text. The function takes a string as input and return a list of tokens."""
@@ -48,26 +56,54 @@ def tokenize(question):
     return tokens
 
 
-def question_to_vector(question, model=None):
-    """Takes a list words as input and returns the word2vec matrix for these words.
-    The word2vec model was pretrained by google."""
-    vectors = []
-    for w in question:
-        try:
-            vectors.append(model[w])
-        except KeyError:
-            continue  # Ignore words that are not in the vocabulary
-
-    if len(vectors) == 0:
-        return np.zeros(1,300)
-
-    vectors = np.array(vectors)
-    return vectors
 
 
-def sum_vectors(vectors):
-    vector = vectors.sum(axis=0)
-    return vector / np.sqrt((vector ** 2).sum())
+
+class Word2vecTransformer(BaseEstimator, TransformerMixin):
+    """Takes a tokenized list of words and transforms it into word2vec vectors. 
+    If the option sum is set to True the transformer returns a normalised sum of these vectors."""
+    def __init__(self, model_file, sum=False):
+        self._model = gensim.models.KeyedVectors.load_word2vec_format(model_file, binary=True)
+
+
+    def transform(self, df):
+        new_df = pd.DataFrame()
+        if self.sum:
+            new_df["q1_vecsum"] = df["q1_tokens"].apply(self._question_to_vector).apply(self._sum_vectors)
+            new_df["q2_vecsum"] = df["q2_tokens"].apply(self._question_to_vector).apply(self._sum_vectors)
+        else:
+            new_df["q1_word2vec"] = df["q1_tokens"].apply(self._question_to_vector)
+            new_df["q2_word2vec"] = df["q2_tokens"].apply(self._question_to_vector)
+
+        return new_df
+
+
+    def fit(self, df, y=None, **fit_params):
+        return self
+
+
+    def _question_to_vector(self, question):
+        """Takes a list words as input and returns the word2vec matrix for these words.
+        The word2vec model was pretrained by google."""
+        vectors = []
+        for w in question:
+            try:
+                vectors.append(self._model[w])
+            except KeyError:
+                continue  # Ignore words that are not in the vocabulary
+
+        if len(vectors) == 0:
+            return np.zeros(1,300)
+
+        vectors = np.array(vectors)
+        return vectors
+
+
+        def _sum_vectors(self, vectors):
+            vector = vectors.sum(axis=0)
+            return vector / np.sqrt((vector ** 2).sum())
+
+
 
 
 class TfidfTransformer(BaseEstimator, TransformerMixin):
@@ -75,20 +111,22 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     outputs a sparse array of tfidf values for both questions.
     """
     def __init__(self):
-        self.tfidf = TfidfVectorizer(strip_accents=None, lowercase=False,
+        self._tfidf = TfidfVectorizer(strip_accents=None, lowercase=False,
                                      preprocessor=None, tokenizer=tokenize)
 
-    def transform(self, df, **transform_params):
-        tfidfs_q1 = self.tfidf.transform(df["question1"])
-        tfidfs_q2 = self.tfidf.transform(df["question2"])
+
+    def transform(self, df):
+        tfidfs_q1 = self._tfidf.transform(df["question1"])
+        tfidfs_q2 = self._tfidf.transform(df["question2"])
         # Stack horizontally since the words in q1 and q2 should be arranged in separate columns
         tfidf_q1_q2 = hstack([tfidfs_q1, tfidfs_q2])
 
         return tfidf_q1_q2
 
+
     def fit(self, df, y=None, **fit_params):
         # Fit tfidfs on the whole corpus
-        self.tfidf.fit(pd.concat([df["question1"], df["question2"]]))
+        self._tfidf.fit(pd.concat([df["question1"], df["question2"]]))
 
         return self
 
@@ -108,9 +146,22 @@ class FeatureTransformer(BaseEstimator, TransformerMixin):
         new_data["q1_len_word_ratio"] = new_data["q1_length"]/new_data["q1_n_words"]
         new_data["q2_len_word_ratio"] = new_data["q2_length"]/new_data["q2_n_words"]
         new_data["word_share"] = df.apply(benchmark_model.word_match_share, axis=1)
+
+        return new_data
+
+    def fit(self, df, y=None, **fit_params):
+        return self
+
+class VectorFeatureTransformer(BaseEstimator, TransformerMixin):
+
+    def transform(self, df):
+        """Transform tokenized words into features. My guideline for the feature engineering was
+         the following article https://www.linkedin.com/pulse/duplicate-quora-question-abhishek-thakur.
+        """
+        new_data = pd.DataFrame()
         new_data["word2vec_cosine_distance"] = df.apply(lambda x: cosine(x["q1_vecsum"], x["q2_vecsum"]), axis=1)
         new_data["word2vec_cityblock_distance"] = df.apply(lambda x: cityblock(x["q1_vecsum"],
-                                                                              x["q2_vecsum"]), axis=1)
+                                                                               x["q2_vecsum"]), axis=1)
         new_data["word2vec_jaccard_distance"] = df.apply(lambda x: jaccard(x["q1_vecsum"], x["q2_vecsum"]), axis=1)
         new_data["word2vec_canberra_distance"] = df.apply(lambda x: canberra(x["q1_vecsum"], x["q2_vecsum"]), axis=1)
         new_data["word2vec_minkowski_distance"] = df.apply(lambda x: minkowski(x["q1_vecsum"], x["q2_vecsum"], 3), axis=1)
@@ -125,4 +176,3 @@ class FeatureTransformer(BaseEstimator, TransformerMixin):
 
     def fit(self, df, y=None, **fit_params):
         return self
-
