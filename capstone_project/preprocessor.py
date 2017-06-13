@@ -1,5 +1,6 @@
 """Collections of functions that are used to preprocessing the Quora data"""
 import os
+import sys
 import pickle
 import string
 import pandas as pd
@@ -59,13 +60,14 @@ def tokenize(question):
 class Word2vecTransformer(BaseEstimator, TransformerMixin):
     """Takes a tokenized list of words and transforms it into word2vec vectors. 
     If the option sum is set to True the transformer returns a normalised sum of these vectors."""
-    def __init__(self, model_file=None, sum_up=False):
-        self._sum = sum_up
-        self._model = gensim.models.KeyedVectors.load_word2vec_format(model_file, binary=True)
+    def __init__(self, model=None, sum_up=False):
+        self.sum_up = sum_up
+        self.model = model
+        #self.model = gensim.models.KeyedVectors.load_word2vec_format(model_file, binary=True)
 
     def transform(self, df):
         new_df = pd.DataFrame()
-        if self._sum:
+        if self.sum_up:
             new_df["q1_vecsum"] = df["q1_tokens"].apply(self._question_to_vector).apply(self._sum_vectors)
             new_df["q2_vecsum"] = df["q2_tokens"].apply(self._question_to_vector).apply(self._sum_vectors)
         else:
@@ -83,12 +85,12 @@ class Word2vecTransformer(BaseEstimator, TransformerMixin):
         vectors = []
         for w in question:
             try:
-                vectors.append(self._model[w])
+                vectors.append(self.model[w])
             except KeyError:
                 continue  # Ignore words that are not in the vocabulary
 
         if len(vectors) == 0:
-            return np.zeros((1, 300))
+            return np.zeros((1, 300)) #TODO change to match model length
 
         vectors = np.array(vectors)
         return vectors
@@ -137,6 +139,9 @@ class FeatureTransformer(BaseEstimator, TransformerMixin):
         new_data["q2_len_word_ratio"] = new_data["q2_length"]/new_data["q2_n_words"]
         new_data["word_share"] = df.apply(benchmark_model.word_match_share, axis=1)
 
+        new_data = new_data.fillna(new_data.mean()) # Fill nan values of distance measures. Caused by questions with stopwords only
+        new_data[np.isinf(new_data)] = sys.float_info.max
+
         return new_data
 
     def fit(self, df, y=None, **fit_params):
@@ -166,7 +171,7 @@ class VectorFeatureTransformer(BaseEstimator, TransformerMixin):
         new_data["word2vec_kurtosis_q1"] = df["q1_vecsum"].apply(lambda vector: kurtosis(np.nan_to_num(vector)))
         new_data["word2vec_kurtosis_q2"] = df["q2_vecsum"].apply(lambda vector: kurtosis(np.nan_to_num(vector)))
 
-        new_data = new_data.fillna(df.mean()) # Fill nan values of distance measures. Caused by questions with stopwords only
+        new_data = new_data.fillna(new_data.mean()) # Fill nan values of distance measures. Caused by questions with stopwords only
 
         return new_data
 

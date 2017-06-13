@@ -56,3 +56,17 @@ def test_featuretransformer():
         print dtype
         assert(dtype in [int, float])
 
+
+#TODO test that no nan values are present in both feature transformers!!!
+#print test[0], len(test[0])
+#print np.any(np.isnan(test))
+#print np.any(np.isnan(test), axis=0)
+#print np.where(np.any(np.isnan(test),axis=1))
+#print test[367]
+
+#TODO make sure that no inf is present
+#rint np.any(np.isinf(test), axis=0)
+#print np.where(np.any(np.isinf(test),axis=1))
+#pint test[1161]
+#import sys
+#sys.float_info.max
