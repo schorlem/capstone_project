@@ -6,7 +6,7 @@ import string
 import pandas as pd
 import numpy as np
 import spacy
-import gensim
+from engarde.decorators import has_dtypes
 from scipy.sparse import hstack
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -24,7 +24,7 @@ STOPLIST = stopwords.words("english")
 SYMBOLS = " ".join(string.punctuation).split(" ")
 
 
-def save_as_pickle(dataset, output_dir, filename):
+def save_pickle(dataset, output_dir, filename):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     with open(output_dir+filename, "wb") as handle:
@@ -34,6 +34,16 @@ def save_as_pickle(dataset, output_dir, filename):
 def load_pickle(input_dir, filename):
     with open(input_dir+filename, "rb") as handle:
         return pickle.load(handle)
+
+
+# Make sure that the loaded dataframe has the correct layout otherwise throw assertion error
+@has_dtypes(dict(question1=object, question2=object, is_duplicate=int, q1_tokens=object, q2_tokens=object))
+def load_data(file_dir="../output/data/", filename="train_data.pkl"):
+    """Load dataframe using filename as input. A pandas dataframe is returned and it is checked that it
+    has the correct layout.
+    """
+    df = pd.read_pickle(file_dir+filename)
+    return df
 
 
 def tokenize(question):
@@ -57,8 +67,30 @@ def tokenize(question):
     return tokens
 
 
+def question_to_vector(question, model):
+    """Takes a list words as input and returns the word2vec matrix for these words.
+    The word2vec model was pretrained by google."""
+    vectors = []
+    for w in question:
+        try:
+            vectors.append(model[w])
+        except KeyError:
+            continue  # Ignore words that are not in the vocabulary
+
+    if len(vectors) == 0:
+        return np.zeros((1, 300)) #TODO change to match model length
+
+    vectors = np.array(vectors)
+    return vectors
+
+
+def sum_vectors(vectors):
+    vector = vectors.sum(axis=0)
+    return vector / np.sqrt((vector ** 2).sum())
+
+
 class Word2vecTransformer(BaseEstimator, TransformerMixin):
-    """Takes a tokenized list of words and transforms it into word2vec vectors. 
+    """Takes a tokenized list of words and transforms it into word2vec vectors.
     If the option sum is set to True the transformer returns a normalised sum of these vectors."""
     def __init__(self, model=None, sum_up=False):
         self.sum_up = sum_up
@@ -101,7 +133,7 @@ class Word2vecTransformer(BaseEstimator, TransformerMixin):
 
 
 class TfidfTransformer(BaseEstimator, TransformerMixin):
-    """Takes a dataframe, calculates the tfidf values for the column question 1 and question 2, 
+    """Takes a dataframe, calculates the tfidf values for the column question 1 and question 2,
     outputs a sparse array of tfidf values for both questions.
     """
     def __init__(self):
