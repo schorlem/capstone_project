@@ -70,3 +70,5 @@ def test_featuretransformer():
 #pint test[1161]
 #import sys
 #sys.float_info.max
+
+#TODO test get names check only if array of strings is returned

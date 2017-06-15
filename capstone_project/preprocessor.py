@@ -95,21 +95,24 @@ class Word2vecTransformer(BaseEstimator, TransformerMixin):
     def __init__(self, model=None, sum_up=False):
         self.sum_up = sum_up
         self.model = model
+        self.new_data = pd.DataFrame()
         #self.model = gensim.models.KeyedVectors.load_word2vec_format(model_file, binary=True)
 
     def transform(self, df):
-        new_df = pd.DataFrame()
         if self.sum_up:
-            new_df["q1_vecsum"] = df["q1_tokens"].apply(self._question_to_vector).apply(self._sum_vectors)
-            new_df["q2_vecsum"] = df["q2_tokens"].apply(self._question_to_vector).apply(self._sum_vectors)
+            self.new_data["q1_vecsum"] = df["q1_tokens"].apply(self._question_to_vector).apply(self._sum_vectors)
+            self.new_data["q2_vecsum"] = df["q2_tokens"].apply(self._question_to_vector).apply(self._sum_vectors)
         else:
-            new_df["q1_word2vec"] = df["q1_tokens"].apply(self._question_to_vector)
-            new_df["q2_word2vec"] = df["q2_tokens"].apply(self._question_to_vector)
+            self.new_data["q1_word2vec"] = df["q1_tokens"].apply(self._question_to_vector)
+            self.new_data["q2_word2vec"] = df["q2_tokens"].apply(self._question_to_vector)
 
-        return new_df
+        return self.new_data
 
     def fit(self, df, y=None, **fit_params):
         return self
+
+    def get_feature_names(self):
+        return self.new_data.columns.values
 
     def _question_to_vector(self, question):
         """Takes a list words as input and returns the word2vec matrix for these words.
@@ -154,58 +157,69 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
         return self
 
-
+# TODO maybe add engarde stuff here??
 class FeatureTransformer(BaseEstimator, TransformerMixin):
+
+    def __init__(self):
+        self.new_data =  pd.DataFrame()
 
     def transform(self, df):
         """Transform tokenized words into features. My guideline for the feature engineering was
          the following article https://www.linkedin.com/pulse/duplicate-quora-question-abhishek-thakur.
         """
-        new_data = pd.DataFrame()
-        new_data["q1_length"] = df["question1"].apply(lambda question: len(str(question)))
-        new_data["q2_length"] = df["question2"].apply(lambda question: len(str(question)))
-        new_data["diff_length"] = new_data["q1_length"] - new_data["q2_length"]
-        new_data["q1_n_words"] = df["q1_tokens"].apply(lambda words: len(words))
-        new_data["q2_n_words"] = df["q2_tokens"].apply(lambda words: len(words))
-        new_data["q1_len_word_ratio"] = new_data["q1_length"]/new_data["q1_n_words"]
-        new_data["q2_len_word_ratio"] = new_data["q2_length"]/new_data["q2_n_words"]
-        new_data["word_share"] = df.apply(benchmark_model.word_match_share, axis=1)
+        self.new_data["q1_length"] = df["question1"].apply(lambda question: len(str(question)))
+        self.new_data["q2_length"] = df["question2"].apply(lambda question: len(str(question)))
+        self.new_data["diff_length"] = self.new_data["q1_length"] - self.new_data["q2_length"]
+        self.new_data["q1_n_words"] = df["q1_tokens"].apply(lambda words: len(words))
+        self.new_data["q2_n_words"] = df["q2_tokens"].apply(lambda words: len(words))
+        self.new_data["q1_len_word_ratio"] = self.new_data["q1_length"]/self.new_data["q1_n_words"]
+        self.new_data["q2_len_word_ratio"] = self.new_data["q2_length"]/self.new_data["q2_n_words"]
+        self.new_data["word_share"] = df.apply(benchmark_model.word_match_share, axis=1)
 
-        new_data = new_data.fillna(new_data.mean()) # Fill nan values of distance measures. Caused by questions with stopwords only
-        new_data[np.isinf(new_data)] = sys.float_info.max
+        self.new_data = self.new_data.fillna(self.new_data.mean()) # Fill nan values of distance measures. Caused by questions with stopwords only
+        self.new_data[np.isinf(self.new_data)] = sys.float_info.max
 
-        return new_data
+        return self.new_data
 
     def fit(self, df, y=None, **fit_params):
         return self
+
+    def get_feature_names(self):
+        return self.new_data.columns.values
 
 
 class VectorFeatureTransformer(BaseEstimator, TransformerMixin):
 
+    def __init__(self):
+        self.new_data =  pd.DataFrame()
+
     def transform(self, df):
         """Transform tokenized words into features. My guideline for the feature engineering was
          the following article https://www.linkedin.com/pulse/duplicate-quora-question-abhishek-thakur.
         """
-        new_data = pd.DataFrame()
-        new_data["word2vec_cosine_distance"] = df.apply(lambda x: cosine(np.nan_to_num(x["q1_vecsum"]), np.nan_to_num(x["q2_vecsum"])), axis=1)
-        new_data["word2vec_cityblock_distance"] = df.apply(lambda x: cityblock(np.nan_to_num(x["q1_vecsum"]),
+        self.new_data = pd.DataFrame()
+        self.new_data["word2vec_cosine_distance"] = df.apply(lambda x: cosine(np.nan_to_num(x["q1_vecsum"]), np.nan_to_num(x["q2_vecsum"])), axis=1)
+        self.new_data["word2vec_cityblock_distance"] = df.apply(lambda x: cityblock(np.nan_to_num(x["q1_vecsum"]),
                                                                                np.nan_to_num(x["q2_vecsum"])), axis=1)
-        new_data["word2vec_jaccard_distance"] = df.apply(lambda x: jaccard(np.nan_to_num(x["q1_vecsum"]), np.nan_to_num(x["q2_vecsum"])), axis=1)
-        new_data["word2vec_canberra_distance"] = df.apply(lambda x: canberra(np.nan_to_num(x["q1_vecsum"]), np.nan_to_num(x["q2_vecsum"])), axis=1)
-        new_data["word2vec_minkowski_distance"] = df.apply(lambda x:
+        self.new_data["word2vec_jaccard_distance"] = df.apply(lambda x: jaccard(np.nan_to_num(x["q1_vecsum"]), np.nan_to_num(x["q2_vecsum"])), axis=1)
+        self.new_data["word2vec_canberra_distance"] = df.apply(lambda x: canberra(np.nan_to_num(x["q1_vecsum"]), np.nan_to_num(x["q2_vecsum"])), axis=1)
+        self.new_data["word2vec_minkowski_distance"] = df.apply(lambda x:
                                                            minkowski(np.nan_to_num(x["q1_vecsum"]), np.nan_to_num(x["q2_vecsum"]), 3), axis=1)
-        new_data["word2vec_euclidean_distance"] = df.apply(lambda x:
+        self.new_data["word2vec_euclidean_distance"] = df.apply(lambda x:
                                                            euclidean(np.nan_to_num(x["q1_vecsum"]), np.nan_to_num(x["q2_vecsum"])), axis=1)
-        new_data["word2vec_braycurtis_distance"] = df.apply(lambda x:
+        self.new_data["word2vec_braycurtis_distance"] = df.apply(lambda x:
                                                             braycurtis(np.nan_to_num(x["q1_vecsum"]), np.nan_to_num(x["q2_vecsum"])), axis=1)
-        new_data["word2vec_skew_q1"] = df["q1_vecsum"].apply(lambda vector: skew(np.nan_to_num(vector)))
-        new_data["word2vec_skew_q2"] = df["q2_vecsum"].apply(lambda vector: skew(np.nan_to_num(vector)))
-        new_data["word2vec_kurtosis_q1"] = df["q1_vecsum"].apply(lambda vector: kurtosis(np.nan_to_num(vector)))
-        new_data["word2vec_kurtosis_q2"] = df["q2_vecsum"].apply(lambda vector: kurtosis(np.nan_to_num(vector)))
+        self.new_data["word2vec_skew_q1"] = df["q1_vecsum"].apply(lambda vector: skew(np.nan_to_num(vector)))
+        self.new_data["word2vec_skew_q2"] = df["q2_vecsum"].apply(lambda vector: skew(np.nan_to_num(vector)))
+        self.new_data["word2vec_kurtosis_q1"] = df["q1_vecsum"].apply(lambda vector: kurtosis(np.nan_to_num(vector)))
+        self.new_data["word2vec_kurtosis_q2"] = df["q2_vecsum"].apply(lambda vector: kurtosis(np.nan_to_num(vector)))
 
-        new_data = new_data.fillna(new_data.mean()) # Fill nan values of distance measures. Caused by questions with stopwords only
+        self.new_data = self.new_data.fillna(self.new_data.mean()) # Fill nan values of distance measures. Caused by questions with stopwords only
 
-        return new_data
+        return self.new_data
 
     def fit(self, df, y=None, **fit_params):
         return self
+
+    def get_feature_names(self):
+        return self.new_data.columns.values
