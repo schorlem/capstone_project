@@ -110,9 +110,6 @@ class Word2vecTransformer(BaseEstimator, TransformerMixin):
     def fit(self, df, y=None, **fit_params):
         return self
 
-    def get_feature_names(self):
-        return new_data.columns.values
-
     def _question_to_vector(self, question):
         """Takes a list words as input and returns the word2vec matrix for these words.
         The word2vec model was pretrained by google."""
