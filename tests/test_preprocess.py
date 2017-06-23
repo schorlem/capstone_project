@@ -72,3 +72,10 @@ def test_featuretransformer():
 #sys.float_info.max
 
 #TODO test get names check only if array of strings is returned
+
+
+#test in train lstm that concatenate doubles length of all tokens
+#print len(tokens_1), len(tokens_2), len(all_tokens)
+#print tokens_1[-1]
+#print all_tokens[-1]
+#
