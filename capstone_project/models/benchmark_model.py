@@ -1,4 +1,7 @@
-# The following code for this benchmark model is based on this kaggle kernel: https://www.kaggle.com/cgrimal/quora-question-pairs/words-in-common-benchmark/code
+""" This module implements the calcultation of out benchmark model. The benchmark model
+The code for the benchmark model is based on this kaggle kernel:
+https://www.kaggle.com/cgrimal/quora-question-pairs/words-in-common-benchmark/code
+"""
 
 from nltk.corpus import stopwords
 import pandas as pd
@@ -9,6 +12,8 @@ STOPS = set(stopwords.words("english"))
 
 
 def word_match_share(row):
+    """Takes a row of a dataframe and returns the matched word share ratio. The input row needs to have two columns
+    named question1 and question 2."""
     q1words = {}
     q2words = {}
     for word in str(row["question1"]).lower().split():
