@@ -37,28 +37,11 @@ Project Organization
 ------------
 Installation:
 
-Install `capstone_project` in your environment:
-
-```bash
-$ pip install --editable .
-```
---------
-
-download data from:
-
-and copy it into the data folder
-
-then download the pretrained word2vec model:
-
-
-and copy it into the data folder if necessary
-
 If you want to setup google cloud with gpu support follow these steps:
  
 For google cloud: Follow steps 1-4 of:
 https://medium.com/google-cloud/running-jupyter-notebooks-on-gpu-on-google-cloud-d44f57d22dbd
  
-
 Install anaconda as explained in step 5 but instead of install tensorflow with 
 pip install the complete virtual environment with conda and activate it:
 
@@ -72,13 +55,54 @@ https://medium.com/google-cloud/running-jupyter-notebooks-on-gpu-on-google-cloud
 
 then
 
+git clone and cd to capstone_project
+
 Install `capstone_project` in the virtual environment:
 
 ```bash
 $ pip install --editable .
 ```
 
+download data from:
+https://www.kaggle.com/quora/question-pairs-dataset
+
+and copy it into the data folder
+
+then download the pretrained word2vec model:
+
+https://drive.google.com/file/d/0B7XkCwpI5KDYNlNUTTlSS21pQmM/edit?usp=sharing
+
+or from mirrored link:
+
+https://github.com/mmihaltz/word2vec-GoogleNews-vectors
+
+and copy it into the data folder if necessary
+
+start a python console and execute
+
+```python
+import nltk
+nltk.download()
+```
+then hit d and type stopwords in order to download the nltk stopwords.
+
+then execute
+```bash
+python -m spacy.en.download all
+```
+
+to download the spacy model.
+
 --------
+
+Troubleshooting:
+
+gensim seems to be broken on the google cloud platform and crashes on import
+
+```
+installing pip install google-compute-engine
+```
+should fix the problem https://github.com/RaRe-Technologies/gensim/issues/898
 
 https://www.kaggle.com/artimous/quora-question-pairs/reach-the-count-words-benchmark
 
