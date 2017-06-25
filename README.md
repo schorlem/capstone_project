@@ -88,7 +88,7 @@ then hit d and type stopwords in order to download the nltk stopwords.
 
 then execute
 ```bash
-python -m spacy.en.download all
+python -m spacy download en
 ```
 
 to download the spacy model.

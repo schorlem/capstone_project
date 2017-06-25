@@ -15,7 +15,6 @@ from scipy.spatial.distance import cosine, cityblock, jaccard, canberra, euclide
 from scipy.stats import skew, kurtosis
 from capstone_project.models import benchmark_model
 
-
 # Create english spacy instance. Very slow to load and should thus only be done once
 nlp = spacy.load("en")
 # List of stopwords that will be removed during tokenization

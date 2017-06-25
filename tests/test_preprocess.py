@@ -79,3 +79,15 @@ def test_featuretransformer():
 #print tokens_1[-1]
 #print all_tokens[-1]
 #
+
+
+# test dataset somehow
+#for tokens in train_data["q1_tokens"]:
+#    for w in tokens:
+#        if not isinstance(w, unicode):
+#            print tokens
+#
+#for tokens in train_data["q2_tokens"]:
+#    for w in tokens:
+#        if not isinstance(w, unicode):
+            print tokens
