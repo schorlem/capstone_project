@@ -125,7 +125,6 @@ dependencies:
   - backports.shutil-get-terminal-size==1.0.0
   - backports.ssl-match-hostname==3.4.0.2
   - backports.weakref==1.0rc1
-  - capstone-project (/home/andre/Documents/mooc/udacity/machinelearning/capstone_project)==0.0.0
   - funcsigs==1.0.2
   - ipython-genutils==0.2.0
   - jupyter-client==5.0.1

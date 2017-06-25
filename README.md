@@ -35,7 +35,26 @@ Project Organization
 <p><small>Project structure based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>.</p>
 
 ------------
+Installation:
 
+Install `capstone_project` in your environment:
+
+```bash
+$ pip install --editable .
+```
+--------
+
+download data from:
+
+and copy it into the data folder
+
+then download the pretrained word2vec model:
+
+
+and copy it into the data folder if necessary
+
+If you want to setup google cloud with gpu support follow these steps:
+ 
 For google cloud: Follow steps 1-4 of:
 https://medium.com/google-cloud/running-jupyter-notebooks-on-gpu-on-google-cloud-d44f57d22dbd
  
