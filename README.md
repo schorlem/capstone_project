@@ -36,12 +36,22 @@ Project Organization
 
 ------------
 
-Install the virtual environment with conda and activate it:
+For google cloud: Follow steps 1-4 of:
+https://medium.com/google-cloud/running-jupyter-notebooks-on-gpu-on-google-cloud-d44f57d22dbd
+ 
+
+Install anaconda as explained in step 5 but instead of install tensorflow with 
+pip install the complete virtual environment with conda and activate it:
 
 ```bash
 $ conda env create -f environment.yml
 $ source activate example-project 
 ```
+
+then follow step 6-8:
+https://medium.com/google-cloud/running-jupyter-notebooks-on-gpu-on-google-cloud-d44f57d22dbd
+
+then
 
 Install `capstone_project` in the virtual environment:
 
