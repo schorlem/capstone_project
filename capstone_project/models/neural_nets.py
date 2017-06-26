@@ -21,8 +21,8 @@ def create_embedding_matrix(vec_model, embedding_dim, word_index, number_words):
 
 def create_lstm(embedding_matrix, embedding_dim, number_words, max_sequence_length=50,  num_lstm=100,
                 dropout_lstm=0.2, num_dense=50, dropout_dense=0.2):
-    """ Creates an lstm in keras.The code has been taken from:
-    https://www.kaggle.com/lystdo/lstm-with-word2vec-embedding
+    """ Creates an lstm in keras.The basis for this code was taken from:
+    https://www.kaggle.com/lystdo/lstm-with-word2vec-embedding.
     """
 
     embedding_layer = Embedding(number_words,
@@ -41,12 +41,15 @@ def create_lstm(embedding_matrix, embedding_dim, number_words, max_sequence_leng
     y1 = lstm_layer(embedded_sequences_2)
 
     merged = concatenate([x1, y1])
-    merged = Dropout(dropout_dense)(merged)
     merged = BatchNormalization()(merged)
+    merged = Dropout(dropout_dense)(merged)
 
-    merged = Dense(num_dense, activation="relu")(merged)
-    merged = Dropout(dropout_dense)(merged)
+    merged = Dense(num_dense[0], activation="relu")(merged)
     merged = BatchNormalization()(merged)
+    merged = Dropout(dropout_dense[1])(merged)
+    merged = Dense(num_dense, activation="relu")(merged)
+    merged = BatchNormalization()(merged)
+    merged = Dropout(dropout_dense)(merged)
 
     predictions = Dense(1, activation='sigmoid')(merged)
     model = Model(inputs=[sequence_1_input, sequence_2_input], outputs=predictions)

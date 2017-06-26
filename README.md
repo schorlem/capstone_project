@@ -41,6 +41,9 @@ If you want to setup google cloud with gpu support follow these steps:
  
 For google cloud: Follow steps 1-4 of:
 https://medium.com/google-cloud/running-jupyter-notebooks-on-gpu-on-google-cloud-d44f57d22dbd
+
+Make sure to create a instance with at least 15gb of ram.
+Use machine type n1-standard-4 instead of n1-standard-2
  
 Install anaconda as explained in step 5 but instead of install tensorflow with 
 pip install the complete virtual environment with conda and activate it:
