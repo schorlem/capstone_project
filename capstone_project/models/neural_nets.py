@@ -20,7 +20,7 @@ def create_embedding_matrix(vec_model, embedding_dim, word_index, number_words):
 
 
 def create_lstm(embedding_matrix, embedding_dim, number_words, max_sequence_length=50,  num_lstm=100,
-                dropout_lstm=0.2, num_dense=50, dropout_dense=0.2):
+                dropout_lstm=0.2, num_dense=[50, 20], dropout_dense=0.2):
     """ Creates an lstm in keras.The basis for this code was taken from:
     https://www.kaggle.com/lystdo/lstm-with-word2vec-embedding.
     """
@@ -46,8 +46,8 @@ def create_lstm(embedding_matrix, embedding_dim, number_words, max_sequence_leng
 
     merged = Dense(num_dense[0], activation="relu")(merged)
     merged = BatchNormalization()(merged)
-    merged = Dropout(dropout_dense[1])(merged)
-    merged = Dense(num_dense, activation="relu")(merged)
+    merged = Dropout(dropout_dense)(merged)
+    merged = Dense(num_dense[1], activation="relu")(merged)
     merged = BatchNormalization()(merged)
     merged = Dropout(dropout_dense)(merged)
 
