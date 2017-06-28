@@ -35,7 +35,7 @@ Project Organization
 <p><small>Project structure based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>.</p>
 
 ------------
-Installation:
+Set up the python environment:
 
 If you want to setup google cloud with gpu support follow these steps:
  
@@ -57,6 +57,8 @@ then follow step 6-8:
 https://medium.com/google-cloud/running-jupyter-notebooks-on-gpu-on-google-cloud-d44f57d22dbd
 
 then
+
+INstallation of the capstone project
 
 git clone and cd to capstone_project
 
@@ -95,6 +97,34 @@ python -m spacy download en
 ```
 
 to download the spacy model.
+
+Usage:
+
+The most important parts of the project are the jupyter notebooks. Several 
+functions and classes that are used frequently are located in the capstone+project
+folder.
+
+I started of by spliting and tokenizing the data.
+
+1) split-data-and-tokenize-01-als.ipynb
+
+2) feature_engineering-01-als.ipyng and the train_xgboost-01-las-ipynb
+
+and 3) train_lstm-01-als.ipynb
+
+Training of these algorithms will take a long time. If you 
+are running remotely such as gcloud you want to disconnect while running
+you can export the notebook as a python script and running using tmux ot screen which 
+offer you the option do detach a shell without stopping it. 
+
+if you want to disconnect while t
+
+I used several notebooks to do data exploration.
+ 
+
+
+
+
 
 --------
 
