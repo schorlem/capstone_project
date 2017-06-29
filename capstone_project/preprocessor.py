@@ -1,12 +1,9 @@
 """Collections of functions that are used to preprocessing the Quora data"""
-import os
 import sys
-import pickle
 import string
 import pandas as pd
 import numpy as np
 import spacy
-from engarde.decorators import has_dtypes
 from scipy.sparse import hstack
 from nltk.corpus import stopwords
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -23,28 +20,6 @@ STOPLIST = stopwords.words("english")
 SYMBOLS = " ".join(string.punctuation).split(" ")
 
 
-def save_pickle(dataset, output_dir, filename):
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
-    with open(output_dir+filename, "wb") as handle:
-        pickle.dump(dataset, handle)
-
-
-def load_pickle(input_dir, filename):
-    with open(input_dir+filename, "rb") as handle:
-        return pickle.load(handle)
-
-
-# Make sure that the loaded dataframe has the correct layout otherwise throw assertion error
-@has_dtypes(dict(question1=object, question2=object, is_duplicate=int, q1_tokens=object, q2_tokens=object))
-def load_data(file_dir="../output/data/", filename="train_data.pkl"):
-    """Load dataframe using filename as input. A pandas dataframe is returned and it is checked that it
-    has the correct layout.
-    """
-    df = pd.read_pickle(file_dir+filename)
-    return df
-
-
 def tokenize(question):
     """Tokenize english text. The function takes a string as input and return a list of tokens."""
     try:
@@ -59,51 +34,24 @@ def tokenize(question):
     for token in doc:
         tokens.append(token.lemma_.lower().strip() if token.lemma_ != "-PRON-" else token.lower_)
 
-    tokens = [token for token in tokens if token not in STOPLIST]
-    tokens = [token for token in tokens if token not in SYMBOLS]
+    tokens = [token for token in tokens if token not in STOPLIST]  # Remove stopwords
+    tokens = [token for token in tokens if token not in SYMBOLS]  # Remove punctuation
     tokens = np.array(tokens)
 
     return tokens
 
 
-def question_to_vector(question, model):
-    """Takes a list words as input and returns the word2vec matrix for these words.
-    The word2vec model was pretrained by google."""
-    vectors = []
-    for w in question:
-        try:
-            vectors.append(model[w])
-        except KeyError:
-            continue  # Ignore words that are not in the vocabulary
-
-    if len(vectors) == 0:
-        return np.zeros((1, 300)) #TODO change to match model length
-
-    vectors = np.array(vectors)
-    return vectors
-
-
-def sum_vectors(vectors):
-    vector = vectors.sum(axis=0)
-    return vector / np.sqrt((vector ** 2).sum())
-
-
 class Word2vecTransformer(BaseEstimator, TransformerMixin):
-    """Takes a tokenized list of words and transforms it into word2vec vectors.
-    If the option sum is set to True the transformer returns a normalised sum of these vectors."""
+    """Takes a tokenized list of words and transforms it into word2vec vectors. T
+    The transformer returns a normalised sum of these vectors."""
     def __init__(self, model=None, sum_up=False):
         self.sum_up = sum_up
         self.model = model
 
     def transform(self, df):
         new_data = pd.DataFrame()
-        if self.sum_up:
-            new_data["q1_vecsum"] = df["q1_tokens"].apply(self._question_to_vector).apply(self._sum_vectors)
-            new_data["q2_vecsum"] = df["q2_tokens"].apply(self._question_to_vector).apply(self._sum_vectors)
-        else:
-            new_data["q1_word2vec"] = df["q1_tokens"].apply(self._question_to_vector)
-            new_data["q2_word2vec"] = df["q2_tokens"].apply(self._question_to_vector)
-
+        new_data["q1_vecsum"] = df["q1_tokens"].apply(self._question_to_vector).apply(self._sum_vectors)
+        new_data["q2_vecsum"] = df["q2_tokens"].apply(self._question_to_vector).apply(self._sum_vectors)
         return new_data
 
     def fit(self, df, y=None, **fit_params):
@@ -120,7 +68,7 @@ class Word2vecTransformer(BaseEstimator, TransformerMixin):
                 continue  # Ignore words that are not in the vocabulary
 
         if len(vectors) == 0:
-            return np.zeros((1, 300)) #TODO change to match model length
+            return np.zeros((1, 300))
 
         vectors = np.array(vectors)
         return vectors
@@ -152,7 +100,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
         return self
 
-# TODO maybe add engarde stuff here??
+
 class FeatureTransformer(BaseEstimator, TransformerMixin):
 
     def __init__(self):
@@ -173,7 +121,7 @@ class FeatureTransformer(BaseEstimator, TransformerMixin):
         new_data["word_share"] = df.apply(benchmark_model.word_match_share, axis=1)
 
         self.new_features = new_data.columns.values
-        new_data = new_data.fillna(new_data.mean()) # Fill nan values of distance measures. Caused by questions with stopwords only
+        new_data = new_data.fillna(new_data.mean())  # Fill nan values. Caused by questions with stopwords only.
         new_data[np.isinf(new_data)] = sys.float_info.max
 
         return new_data
@@ -182,36 +130,44 @@ class FeatureTransformer(BaseEstimator, TransformerMixin):
         return self
 
     def get_feature_names(self):
+        """Returns the names of the new features only after the transform method has been run."""
         return self.new_features
 
 
 class VectorFeatureTransformer(BaseEstimator, TransformerMixin):
 
     def __init__(self):
-        self.new_features = [] # TODO figure out what to do when called before transform
+        self.new_features = []
 
     def transform(self, df):
         """Transform tokenized words into features. My guideline for the feature engineering was
          the following article https://www.linkedin.com/pulse/duplicate-quora-question-abhishek-thakur.
         """
         new_data = pd.DataFrame()
-        new_data["word2vec_cosine_distance"] = df.apply(lambda x: cosine(np.nan_to_num(x["q1_vecsum"]), np.nan_to_num(x["q2_vecsum"])), axis=1)
+        new_data["word2vec_cosine_distance"] = df.apply(lambda x: cosine(np.nan_to_num(x["q1_vecsum"]),
+                                                                         np.nan_to_num(x["q2_vecsum"])), axis=1)
         new_data["word2vec_cityblock_distance"] = df.apply(lambda x: cityblock(np.nan_to_num(x["q1_vecsum"]),
                                                                                np.nan_to_num(x["q2_vecsum"])), axis=1)
-        new_data["word2vec_jaccard_distance"] = df.apply(lambda x: jaccard(np.nan_to_num(x["q1_vecsum"]), np.nan_to_num(x["q2_vecsum"])), axis=1)
-        new_data["word2vec_canberra_distance"] = df.apply(lambda x: canberra(np.nan_to_num(x["q1_vecsum"]), np.nan_to_num(x["q2_vecsum"])), axis=1)
+        new_data["word2vec_jaccard_distance"] = df.apply(lambda x: jaccard(np.nan_to_num(x["q1_vecsum"]),
+                                                                           np.nan_to_num(x["q2_vecsum"])), axis=1)
+        new_data["word2vec_canberra_distance"] = df.apply(lambda x: canberra(np.nan_to_num(x["q1_vecsum"]),
+                                                                             np.nan_to_num(x["q2_vecsum"])), axis=1)
         new_data["word2vec_minkowski_distance"] = df.apply(lambda x:
-                                                           minkowski(np.nan_to_num(x["q1_vecsum"]), np.nan_to_num(x["q2_vecsum"]), 3), axis=1)
+                                                           minkowski(np.nan_to_num(x["q1_vecsum"]),
+                                                                     np.nan_to_num(x["q2_vecsum"]), 3), axis=1)
         new_data["word2vec_euclidean_distance"] = df.apply(lambda x:
-                                                           euclidean(np.nan_to_num(x["q1_vecsum"]), np.nan_to_num(x["q2_vecsum"])), axis=1)
+                                                           euclidean(np.nan_to_num(x["q1_vecsum"]),
+                                                                     np.nan_to_num(x["q2_vecsum"])), axis=1)
         new_data["word2vec_braycurtis_distance"] = df.apply(lambda x:
-                                                            braycurtis(np.nan_to_num(x["q1_vecsum"]), np.nan_to_num(x["q2_vecsum"])), axis=1)
+                                                            braycurtis(np.nan_to_num(x["q1_vecsum"]),
+                                                                       np.nan_to_num(x["q2_vecsum"])), axis=1)
         new_data["word2vec_skew_q1"] = df["q1_vecsum"].apply(lambda vector: skew(np.nan_to_num(vector)))
         new_data["word2vec_skew_q2"] = df["q2_vecsum"].apply(lambda vector: skew(np.nan_to_num(vector)))
         new_data["word2vec_kurtosis_q1"] = df["q1_vecsum"].apply(lambda vector: kurtosis(np.nan_to_num(vector)))
         new_data["word2vec_kurtosis_q2"] = df["q2_vecsum"].apply(lambda vector: kurtosis(np.nan_to_num(vector)))
 
-        new_data = new_data.fillna(new_data.mean()) # Fill nan values of distance measures. Caused by questions with stopwords only
+        # Fill nan values of distance measures. Caused by questions with stopwords only
+        new_data = new_data.fillna(new_data.mean())
         self.new_features = new_data.columns.values
 
         return new_data
@@ -220,4 +176,5 @@ class VectorFeatureTransformer(BaseEstimator, TransformerMixin):
         return self
 
     def get_feature_names(self):
+        """Returns the names of the new features only after the transform method has been run."""
         return self.new_features
