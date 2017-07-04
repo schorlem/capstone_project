@@ -84,6 +84,10 @@ https://github.com/mmihaltz/word2vec-GoogleNews-vectors
 
 and copy it into the data folder if necessary
 
+if you want to use the glove model instead download it here:
+
+# TODO find link
+
 start a python console and execute
 
 ```python
