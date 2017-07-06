@@ -1,15 +1,13 @@
 Capstone Project
 ==============================
 
-A short description of the project.
+Find duplicate question in the Quora dataset.
 
 Project Organization
 ------------
 
     │
     ├── data/               <- The original, immutable data dump. 
-    │
-    ├── reports/            <- Final report 
     │
     ├── notebooks/          <- Jupyter notebooks. Naming convention is a short `-` delimited 
     │                         description, a number (for ordering), and the creator's initials,
@@ -28,104 +26,129 @@ Project Organization
     ├── README.md           <- The top-level README for developers using this project.
     │
     └── setup.py            
-
-
+    
 --------
 
 <p><small>Project structure based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>.</p>
 
+Setting up the Environment
 --------
 
-Set up the python environment:
-
-If you want to setup google cloud with gpu support follow these steps:
- 
-For google cloud: Follow steps 1-4 of:
-https://medium.com/google-cloud/running-jupyter-notebooks-on-gpu-on-google-cloud-d44f57d22dbd
-
-Make sure to create a instance with at least 15gb of ram.
-Use machine type n1-standard-4 instead of n1-standard-2
- 
-Install anaconda as explained in step 5 but instead of install tensorflow with 
-pip install the complete virtual environment with conda and activate it:
+My project uses python and several machine learning packages. I am using the anaconda 
+environment and all the installed packages are shown in the environment.yml file.
+If you have setup where Anaconda and CUDa and CUDNN is already installed you can just 
+run the following commands to run and activate my python environment.
 
 ```bash
 $ conda env create -f environment.yml
-$ source activate example-project 
+$ source activate capstone_project 
 ```
+The lstm model I am using should be trained on a GPU. Otherwise training will be very slow.
+If you don't have a powerfull GPU you can use cloud services like amazon aws or the google cloud platform.
+In the following I will go through the step to set up my project on google cloud.
+The tutorial is based on this excellent blog post:
 
-then follow step 6-8:
 https://medium.com/google-cloud/running-jupyter-notebooks-on-gpu-on-google-cloud-d44f57d22dbd
 
-then
+which helped my a lot while I was setting up my compute engine for the first time.
+ 
+1. You can follow steps 1-4 of the above mentioned blog post. However, make to
+use machine type n1-standard-4 instead of n1-standard-2, because the instance that
+we will be using needs at least 15gb of RAM.
+ 
+2. Install anaconda as explained in step 5 of the blog post. Do not installing just
+tensorflow and keras with pip install. Instsall the complete virtual environment 
+with conda and activate it using the commands below:
 
-INstallation of the capstone project
+    ```bash
+    $ conda env create -f environment.yml
+    $ source activate capstone_project 
+    ```
 
-git clone and cd to capstone_project
+3. Again you can follow the blog post. Just follow step 6-8. There is no need to
+change anything this time. 
 
-Install `capstone_project` in the virtual environment:
+Your system should be ready now and you should be able to use jupyter notebooks 
+that are running on the google cloud platform with GPU support. As a next step we 
+need to install my project and download the data.
+
+Installing the capstone project
+--------
+
+1. Use git clone to download the project and go into the folder.
+
+2. Install the `capstone_project` in the virtual environment by executing the
+following command:
 
 ```bash
 $ pip install --editable .
 ```
 
-download data from:
-https://www.kaggle.com/quora/question-pairs-dataset
+3. Download the data from: https://www.kaggle.com/quora/question-pairs-dataset
+and copy it into the data folder. You might have to create the data folder first 
+since it has been added to my gitignore file.
 
-and copy it into the data folder
+4. Now we should download the pretrained word2vec model that I am using. I found
+three locations:
 
-then download the pretrained word2vec model:
+    https://drive.google.com/file/d/0B7XkCwpI5KDYNlNUTTlSS21pQmM/edit?usp=sharing
+    https://github.com/mmihaltz/word2vec-GoogleNews-vectors
+    https://groups.google.com/forum/#!topic/word2vec-toolkit/z0Aw5powUco
 
-https://drive.google.com/file/d/0B7XkCwpI5KDYNlNUTTlSS21pQmM/edit?usp=sharing
+    and copy it into the data folder. The first link needs you to log in which makes it
+hard to download the data with wget or curl. If you running on the cloud check out the
+other two links first. 
 
-or from mirrored link:
+5. The Glove model is not necessarly needed for my project, but I have been playing with
+it a bit. So, if you want to use the glove model download it here:
 
-https://github.com/mmihaltz/word2vec-GoogleNews-vectors
 
-and copy it into the data folder if necessary
-
-if you want to use the glove model instead download it here:
-
-# TODO find link
-
+6. We need some data from the nltk corpus for this project, To download it
 start a python console and execute
 
-```python
-import nltk
-nltk.download()
-```
-then hit d and type stopwords in order to download the nltk stopwords.
+    ```python
+    import nltk
+    nltk.download()
+    ```
+    Then hit d and type stopwords in order to download the nltk stopwords.
 
-then execute
-```bash
-python -m spacy download en
-```
+7. We also need some data from spacy since I am using this module too. In order to
+download the needed library just execute
+    
+    ```bash
+    python -m spacy download en
+    ```
+    in a bash shell to download the spacy model.
 
-to download the spacy model.
 
-Usage:
+How to run the code
+--------
 
 The most important parts of the project are the jupyter notebooks. Several 
-functions and classes that are used frequently are located in the capstone+project
-folder.
+functions and classes that are used frequently are located in the capstone_project
+folder. Here is a list of the most important notebooks:
 
-I started of by spliting and tokenizing the data.
+1. split-data-and-tokenize-01-als.ipynb <- Split the dataset into train/val/test set and tokenize the strings.
 
-1) split-data-and-tokenize-01-als.ipynb <- Split the dataset into train/val/test set and tokenize the strings.
-2) feature_engineering-01-als.ipynb     <- Create new features for classifiers 
-3) logistic_regression-01-als.ipynb     <- Train simple logistic model on the features created in step 2 and use benchmark model
-4) train_xgboost-01-als.ipynb           <- Improve predictions with boosted trees
-5) train_lstm-01-als.ipynb              <- Train a LSTM model with word2vec embeddings (This notebook only depends on step 1)
+2. feature_engineering-01-als.ipynb     <- Create new features for classifiers (Notebook 1. needs to be run first once.) 
 
-Training of these algorithms will take a long time. If you 
-are running remotely such as google cloud and if you want to 
-disconnect while running you can export the notebook as a python script. 
-The script can then run within tmux or screen which 
-offer the option do detach a shell without stopping it. 
+3. logistic_regression-01-als.ipynb     <- Train simple logistic 
+model on the features created in step 2 and use benchmark model
+(Run notebook 1. and 2. first one time.)
+
+4. train_xgboost-01-als.ipynb           <- Improve predictions with boosted trees
+(Run notebook 1. and 2. first one time.)
+
+5. train_lstm-01-als.ipynb              <- Train a LSTM model with word2vec embeddings (This notebook only depends on step 1.)
+
+You can just run all of them in order. The training of these algorithms can take a long time
+depending on you computer. If you  are running remotely on the cloud and if you want
+to  disconnect while running you can export the notebook as a python script. 
+The script can then run within tmux or screen which offer the option to 
+detach a shell without stopping it. 
 
 Troubleshooting
 --------
-
 
 The gensim module seems to be broken on the google cloud platform and it
 crashes when importing it. In order to fix I ran the following command on
@@ -138,11 +161,3 @@ installing pip install google-compute-engine
 See for more information: https://github.com/RaRe-Technologies/gensim/issues/898
 
 ------
-
-https://www.kaggle.com/artimous/quora-question-pairs/reach-the-count-words-benchmark
-
-Frameworks/platforms
-
-NB. If you publish work that uses NLTK, please cite the NLTK book as follows:
-
-    Bird, Steven, Edward Loper and Ewan Klein (2009), Natural Language Processing with Python. O’Reilly Media Inc.
