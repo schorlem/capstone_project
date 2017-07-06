@@ -1,7 +1,7 @@
 Capstone Project
 ==============================
 
-Find duplicate question in the Quora dataset.
+Find duplicate questions in the Quora dataset.
 
 Project Organization
 ------------
@@ -99,9 +99,10 @@ three locations:
 hard to download the data with wget or curl. If you running on the cloud check out the
 other two links first. 
 
-5. The Glove model is not necessarly needed for my project, but I have been playing with
+5. The Glove model is not necessarily needed for my project, but I have been playing with
 it a bit. So, if you want to use the glove model download it here:
 
+    https://nlp.stanford.edu/projects/glove/
 
 6. We need some data from the nltk corpus for this project, To download it
 start a python console and execute
