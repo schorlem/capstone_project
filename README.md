@@ -140,7 +140,10 @@ model on the features created in step 2 and use benchmark model
 4. train_xgboost-01-als.ipynb           <- Improve predictions with boosted trees
 (Run notebook 1. and 2. first one time.)
 
-5. train_lstm-01-als.ipynb              <- Train a LSTM model with word2vec embeddings (This notebook only depends on step 1.)
+5. train_lstm-01-als.ipynb <- Train a LSTM model with word2vec embeddings (This notebook only depends on step 1.)
+
+6. train_lstm-02-als.ipynb <- Train the final model and check perfomance on the test set (This notebook only depends on step 1.)
+
 
 You can just run all of them in order. The training of these algorithms can take a long time
 depending on you computer. If you  are running remotely on the cloud and if you want
