@@ -43,8 +43,8 @@ run the following commands to run and activate my python environment.
 $ conda env create -f environment.yml
 $ source activate capstone_project 
 ```
-The lstm model I am using should be trained on a GPU. Otherwise training will be very slow.
-If you don't have a powerfull GPU you can use cloud services like amazon aws or the google cloud platform.
+The LSTM model I am using should be trained on a GPU. Otherwise training will be very slow.
+If you don't have a powerful GPU you can use cloud services like amazon aws or the google cloud platform.
 In the following I will go through the step to set up my project on google cloud.
 The tutorial is based on this excellent blog post:
 
@@ -57,7 +57,7 @@ use machine type n1-standard-4 instead of n1-standard-2, because the instance th
 we will be using needs at least 15gb of RAM.
  
 2. Install anaconda as explained in step 5 of the blog post. Do not installing just
-tensorflow and keras with pip install. Instsall the complete virtual environment 
+tensorflow and keras with pip install. Install the complete virtual environment 
 with conda and activate it using the commands below:
 
     ```bash
@@ -142,7 +142,7 @@ model on the features created in step 2 and use benchmark model
 
 5. train_lstm-01-als.ipynb <- Train a LSTM model with word2vec embeddings (This notebook only depends on step 1.)
 
-6. train_lstm-02-als.ipynb <- Train the final model and check perfomance on the test set (This notebook only depends on step 1.)
+6. train_lstm-02-als.ipynb <- Train the final model and check performance on the test set (This notebook only depends on step 1.)
 
 
 You can just run all of them in order. The training of these algorithms can take a long time
