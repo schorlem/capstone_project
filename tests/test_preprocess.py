@@ -44,9 +44,15 @@ def test_tfidftransformer():
 
 
 def test_featuretransformer():
-    df = pd.DataFrame([["This is a test.", "Words are needed here."],
-                       ["One two the owl is here.", "Why are you so smart"]],
-                      columns=["question1", "question2"])
+    test_strings = [("This is a test.",
+                     np.array([u"test"])),
+                    ("Are there any positive benefits of laziness and procrastination?",
+                     np.array([u"positive", u"benefit", u"laziness", u"procrastination"])),
+                    ("A question for testing/trying.",
+                     np.array([u"question", u"testing/try"]))]
+    df = pd.DataFrame([["This is a test.", "Are there any positive benefits of laziness and procrastination?",
+                        [u"test"], [u"positive", u"benefit", u"laziness", u"procrastination"]]],
+                      columns=["question1", "question2", "q1_tokens", "q2_tokens"])
     check_df = df.copy()  # Copy df in order to test that the input is not changed
     transformer = pre.FeatureTransformer()
     output = transformer.transform(df)
@@ -55,39 +61,3 @@ def test_featuretransformer():
     for dtype in output.dtypes:
         print dtype
         assert(dtype in [int, float])
-
-
-#TODO test that no nan values are present in both feature transformers!!!
-#print test[0], len(test[0])
-#print np.any(np.isnan(test))
-#print np.any(np.isnan(test), axis=0)
-#print np.where(np.any(np.isnan(test),axis=1))
-#print test[367]
-
-#TODO make sure that no inf is present
-#rint np.any(np.isinf(test), axis=0)
-#print np.where(np.any(np.isinf(test),axis=1))
-#pint test[1161]
-#import sys
-#sys.float_info.max
-
-#TODO test get names check only if array of strings is returned
-
-
-#test in train lstm that concatenate doubles length of all tokens
-#print len(tokens_1), len(tokens_2), len(all_tokens)
-#print tokens_1[-1]
-#print all_tokens[-1]
-#
-
-
-# test dataset somehow
-#for tokens in train_data["q1_tokens"]:
-#    for w in tokens:
-#        if not isinstance(w, unicode):
-#            print tokens
-#
-#for tokens in train_data["q2_tokens"]:
-#    for w in tokens:
-#        if not isinstance(w, unicode):
-            print tokens
